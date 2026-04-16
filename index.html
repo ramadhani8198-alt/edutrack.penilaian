@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduTrack - Sistem Penilaian Siswa</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- SheetJS API for Excel Import -->
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- LOGIN SCREEN -->
+    <div id="login-screen" class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <i class="ph ph-graduation-cap logo-icon" style="font-size:48px;"></i>
+                <h2>EduTrack</h2>
+                <p>Silakan masuk menggunakan akun Anda</p>
+            </div>
+            
+            <div class="login-tabs">
+                <button class="tab-btn active" onclick="switchLoginTab('guru')">Guru / Admin</button>
+                <button class="tab-btn" onclick="switchLoginTab('siswa')">Portal Siswa</button>
+            </div>
+
+            <!-- Guru Login Form -->
+            <form id="form-login-guru" class="auth-form active">
+                <div class="form-group">
+                    <label>PIN Akses Guru</label>
+                    <input type="password" id="login-pin-guru" class="form-control" placeholder="Default: admin123" required>
+                    <small>Masukkan 'admin123' untuk percobaan</small>
+                </div>
+                <button type="submit" class="btn btn-primary w-100" style="width: 100%; justify-content: center;">Masuk</button>
+            </form>
+
+            <!-- Siswa Login Form -->
+            <form id="form-login-siswa" class="auth-form" style="display: none;">
+                <div class="form-group">
+                    <label>NIS Siswa</label>
+                    <input type="text" id="login-nis-siswa" class="form-control" placeholder="Masukkan Nomor Induk Siswa" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-100" style="width: 100%; justify-content: center;">Masuk</button>
+                
+                <div style="text-align: center; margin-top: 16px;">
+                    <p style="font-size: 14px; color: var(--text-muted)">Belum terdaftar? <a href="#" onclick="switchLoginTab('register')">Daftar Akun</a></p>
+                </div>
+            </form>
+
+            <!-- Siswa Register Form -->
+            <form id="form-register-siswa" class="auth-form" style="display: none;">
+                <div class="form-group">
+                    <label>NIS (Nomor Induk Siswa)</label>
+                    <input type="text" id="reg-nis" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Nama Lengkap</label>
+                    <input type="text" id="reg-name" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Jenis Kelamin</label>
+                    <select id="reg-gender" class="form-control">
+                        <option value="L">Laki-laki</option>
+                        <option value="P">Perempuan</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary w-100" style="width: 100%; justify-content: center;">Daftar Akun</button>
+                <div style="text-align: center; margin-top: 16px;">
+                    <p style="font-size: 14px; color: var(--text-muted)">Sudah punya akun? <a href="#" onclick="switchLoginTab('siswa')">Batal & Kembali</a></p>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- APP CONTAINER OVERLAY -->
+    <div id="app-wrapper" class="app-container" style="display: none;">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <i class="ph ph-graduation-cap logo-icon"></i>
+                <h2>EduTrack</h2>
+            </div>
+            
+            <!-- Menu Guru -->
+            <nav class="sidebar-nav" id="nav-guru" style="display: none;">
+                <a href="#" class="nav-item active" data-target="dashboard">
+                    <i class="ph ph-squares-four"></i><span>Dashboard</span>
+                </a>
+                <a href="#" class="nav-item" data-target="students">
+                    <i class="ph ph-users"></i><span>Data Siswa</span>
+                </a>
+                <a href="#" class="nav-item" data-target="assignments">
+                    <i class="ph ph-clipboard-text"></i><span>Tugas & Penilaian</span>
+                </a>
+                <a href="#" class="nav-item" data-target="recap">
+                    <i class="ph ph-chart-bar"></i><span>Rekap & Peringkat</span>
+                </a>
+                <a href="#" class="nav-item" data-target="report">
+                    <i class="ph ph-printer"></i><span>Pelaporan</span>
+                </a>
+            </nav>
+
+            <!-- Menu Siswa -->
+            <nav class="sidebar-nav" id="nav-siswa" style="display: none;">
+                <a href="#" class="nav-item active" data-target="student-dash">
+                    <i class="ph ph-user"></i><span>Profil & Ringkasan</span>
+                </a>
+                <a href="#" class="nav-item" data-target="student-submission">
+                    <i class="ph ph-upload-simple"></i><span>Kumpul Tugas</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer" style="padding: 24px 16px; margin-top:auto; border-top: 1px solid var(--border);">
+                <button class="btn btn-outline w-100" onclick="logout()" style="width: 100%; justify-content: center; color:var(--danger)">
+                    <i class="ph ph-sign-out"></i> Keluar
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="topbar">
+                <div class="topbar-title">
+                    <h1 id="page-title">Dashboard</h1>
+                    <p id="page-subtitle">Ringkasan aktivitas kelas.</p>
+                </div>
+                <div class="user-profile">
+                    <div class="user-info">
+                        <strong id="header-user-name">Pengguna</strong>
+                        <span id="header-user-role">Role</span>
+                    </div>
+                    <div class="avatar">
+                        <i class="ph ph-user"></i>
+                    </div>
+                </div>
+            </header>
+
+            <div class="content-area">
+                
+                <!-- =============================== 
+                     SEGMEN GURU
+                     =============================== -->
+
+                <!-- DASHBOARD SECTION (GURU) -->
+                <section id="dashboard" class="page-section active guru-view">
+                    <!-- Dashboard widgets same as before -->
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon bg-blue"><i class="ph ph-users"></i></div>
+                            <div class="stat-details">
+                                <h3>Total Siswa</h3>
+                                <p id="stat-total-students">0</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon bg-purple"><i class="ph ph-books"></i></div>
+                            <div class="stat-details">
+                                <h3>Total Tugas</h3>
+                                <p id="stat-total-assignments">0</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon bg-green"><i class="ph ph-check-circle"></i></div>
+                            <div class="stat-details">
+                                <h3>Rata-rata Kelas</h3>
+                                <p id="stat-class-average">0</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-widgets">
+                        <div class="widget">
+                            <div class="widget-header"><h3>Siswa Top 3 (Peringkat Tertinggi)</h3></div>
+                            <div class="widget-body">
+                                <ul class="top-students-list" id="top-students-list"><li class="empty-state">Belum bisa diload</li></ul>
+                            </div>
+                        </div>
+                        <div class="widget">
+                            <div class="widget-header"><h3>Tugas Terakhir</h3></div>
+                            <div class="widget-body">
+                                <ul class="recent-assignments-list" id="recent-assignments-list"><li class="empty-state">Belum ada tugas</li></ul>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- STUDENTS SECTION (GURU) -->
+                <section id="students" class="page-section guru-view">
+                    <div class="section-actions" style="margin-bottom: 24px;">
+                        <div class="search-box">
+                            <i class="ph ph-magnifying-glass"></i>
+                            <input type="text" id="search-student" placeholder="Cari nama siswa...">
+                        </div>
+                        <div style="display:flex; gap:12px;">
+                            <button class="btn btn-secondary" onclick="document.getElementById('excel-file-input').click()">
+                                <i class="ph ph-microsoft-excel-logo"></i> Import Excel
+                            </button>
+                            <input type="file" id="excel-file-input" style="display:none;" accept=".xlsx, .xls" onchange="handleExcelImport(event)">
+                            <button class="btn btn-primary" onclick="openModal('student-modal')">
+                                <i class="ph ph-plus"></i> Tambah Manual
+                            </button>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 16px; font-size: 13px; color: var(--text-muted); background: #f8fafc; padding: 12px; border-radius:8px; border:1px solid var(--border);">
+                        <strong>Info Import:</strong> File Excel harus memiliki header kolom: <code>NIS</code>, <code>Nama Lengkap</code>, dan <code>Jenis Kelamin</code> (L/P). <a href="#" onclick="downloadTemplate()" style="color:var(--primary)">Download Template</a>
+                    </div>
+
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr><th>NIS</th><th>Nama Lengkap</th><th>Jenis Kelamin</th><th>Aksi</th></tr>
+                            </thead>
+                            <tbody id="students-table-body">
+                                <!-- Data rendered by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- ASSIGNMENTS SECTION (GURU) -->
+                <section id="assignments" class="page-section guru-view">
+                    <div class="section-actions">
+                        <select id="assignment-filter" class="form-control" style="width: auto;">
+                            <!-- Options rendered by JS -->
+                        </select>
+                        <button class="btn btn-primary" onclick="openModal('assignment-modal')">
+                            <i class="ph ph-plus"></i> Buat Tugas Baru
+                        </button>
+                    </div>
+                    
+                    <div class="assignments-container">
+                        <div class="assignment-list" id="assignment-list">
+                            <!-- List of assignments -->
+                        </div>
+                        
+                        <div class="grading-area" id="grading-area" style="display: none;">
+                            <div class="grading-header">
+                                <h3 id="grading-title">Pilih Tugas</h3>
+                                <button class="btn btn-outline" onclick="closeGradingArea()">Tutup</button>
+                            </div>
+                            <div class="grading-content">
+                                <div class="table-container">
+                                    <table>
+                                        <thead>
+                                            <tr><th>Nama Siswa</th><th>Tugas Teks/File</th><th>Nilai & Feedback Guru</th><th>Aksi</th></tr>
+                                        </thead>
+                                        <tbody id="grading-table-body">
+                                            <!-- Data rendered by JS -->
+                                        </tbody>
+                                        <tfoot>
+                                            <tr>
+                                                <td colspan="5" style="text-align:center;">
+                                                    <button class="btn btn-primary" onclick="renderGradingTable()">Refresh Kumpulan</button>
+                                                </td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- RECAP SECTION (GURU) -->
+                <section id="recap" class="page-section guru-view">
+                    <div class="section-actions">
+                        <button class="btn btn-primary" onclick="calculateRanking()">
+                            <i class="ph ph-arrows-clockwise"></i> Perbarui Peringkat
+                        </button>
+                    </div>
+                    <div class="table-container">
+                        <table class="recap-table">
+                            <thead><tr id="recap-table-header">
+                                <!-- Dinamis dirender app.js -->
+                            </tr></thead>
+                            <tbody id="recap-table-body"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- REPORT SECTION (GURU) -->
+                <section id="report" class="page-section guru-view">
+                    <div class="report-filters">
+                        <select id="report-student-select" class="form-control"></select>
+                        <button class="btn btn-primary" onclick="generateReport()"><i class="ph ph-file-text"></i> Tampilkan</button>
+                        <button class="btn btn-secondary" onclick="printReport()" id="btn-print" disabled><i class="ph ph-printer"></i> Cetak</button>
+                    </div>
+                    <div class="printable-area" id="printable-area" style="display:none;"></div>
+                </section>
+
+
+                <!-- =============================== 
+                     SEGMEN SISWA
+                     =============================== -->
+
+                <!-- DASHBOARD SISWA -->
+                <section id="student-dash" class="page-section siswa-view">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon bg-purple"><i class="ph ph-books"></i></div>
+                            <div class="stat-details">
+                                <h3>Total Tugas Kelas</h3>
+                                <p id="siswa-total-tugas">0</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon bg-green"><i class="ph ph-check-circle"></i></div>
+                            <div class="stat-details">
+                                <h3>Tugas Selesai</h3>
+                                <p id="siswa-tugas-selesai">0</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon bg-blue"><i class="ph ph-star"></i></div>
+                            <div class="stat-details">
+                                <h3>Rata-rata Nilaimu</h3>
+                                <p id="siswa-rata-nilai">0</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="widget">
+                        <div class="widget-header">
+                            <h3>Detail Nilaimu</h3>
+                        </div>
+                        <div class="table-container">
+                            <table class="recap-table">
+                                <thead>
+                                    <tr><th>Mata Tugas / Evaluasi</th><th>Kategori</th><th>Status</th><th>File Unggahan</th><th>Nilai (KKM)</th><th>Catatan Guru</th></tr>
+                                </thead>
+                                <tbody id="siswa-my-grades-table"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- SUBMISSION SISWA -->
+                <section id="student-submission" class="page-section siswa-view">
+                    <div style="max-width: 800px; margin: 0 auto;">
+                        <h2 style="margin-bottom: 24px; font-weight: 600;">Daftar Tugas Yang Harus Dikerjakan</h2>
+                        <div id="siswa-tugas-list" style="display: flex; flex-direction: column; gap: 16px;">
+                            <!-- Kartu tugas diisi via JS -->
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div> <!-- /app wrapper -->
+
+
+    <!-- Modals -->
+    <!-- Student Modal -->
+    <div class="modal" id="student-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="student-modal-title">Tambah Siswa Baru</h3>
+                <button class="close-btn" onclick="closeModal('student-modal')"><i class="ph ph-x"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="student-form">
+                    <input type="hidden" id="student-id">
+                    <div class="form-group">
+                        <label>NIS (Nomor Induk Siswa)</label>
+                        <input type="text" id="student-nis" required class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Nama Lengkap</label>
+                        <input type="text" id="student-name" required class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Jenis Kelamin</label>
+                        <select id="student-gender" class="form-control">
+                            <option value="L">Laki-laki</option>
+                            <option value="P">Perempuan</option>
+                        </select>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-outline" onclick="closeModal('student-modal')">Batal</button>
+                        <button type="submit" class="btn btn-primary">Simpan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Assignment Modal -->
+    <div class="modal" id="assignment-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="assignment-modal-title">Buat Tugas Baru</h3>
+                <button class="close-btn" onclick="closeModal('assignment-modal')"><i class="ph ph-x"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="assignment-form">
+                    <input type="hidden" id="assignment-id">
+                    <div class="form-group">
+                        <label>Judul Tugas / Ujian</label>
+                        <input type="text" id="assignment-title" required class="form-control" placeholder="Misal: Ulangan Harian 1 / Praktik">
+                    </div>
+                    <div class="form-group">
+                        <label>Jenis Evaluasi (Kategori)</label>
+                        <select id="assignment-type" class="form-control">
+                            <option value="UH">UH (Ulangan Harian / Tugas)</option>
+                            <option value="PTS">PTS (Penilaian Tengah Semester)</option>
+                            <option value="PAS">PAS (Penilaian Akhir Semester)</option>
+                            <option value="PRAKTIK">Nilai Praktik / Keterampilan</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="display:flex; gap:16px;">
+                        <div style="flex:1;">
+                            <label>Standar KKM</label>
+                            <input type="number" id="assignment-kkm" required class="form-control" value="75" min="1" max="100">
+                        </div>
+                        <div style="flex:1;">
+                            <label>Tenggat (Deadline)</label>
+                            <input type="date" id="assignment-deadline" required class="form-control">
+                        </div>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-outline" onclick="closeModal('assignment-modal')">Batal</button>
+                        <button type="submit" class="btn btn-primary">Buat Tugas</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Submit Action Modal (Untuk Siswa mereview uploadnya) -->
+    <div class="modal" id="upload-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="upload-modal-title">Konfirmasi Unggahan</h3>
+                <button class="close-btn" onclick="closeModal('upload-modal')"><i class="ph ph-x"></i></button>
+            </div>
+            <div class="modal-body" style="text-align: center; padding: 40px 24px;">
+                <i class="ph ph-check-circle" style="font-size: 64px; color: var(--success); margin-bottom: 16px;"></i>
+                <h4 style="margin-bottom: 8px;">Tugas Berhasil Terunggah ke Guru!</h4>
+                <p id="upload-modal-filename" style="color:var(--text-muted); font-style:italic; margin-bottom: 24px;"></p>
+                <button class="btn btn-primary" onclick="closeModal('upload-modal')">Selesai</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
