@@ -10,6 +10,8 @@
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <!-- SheetJS API for Excel Import -->
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <!-- html2pdf API for PDF Export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -31,23 +33,56 @@
             <!-- Guru Login Form -->
             <form id="form-login-guru" class="auth-form active">
                 <div class="form-group">
-                    <label>PIN Akses Guru</label>
-                    <input type="password" id="login-pin-guru" class="form-control" placeholder="Default: admin123" required>
-                    <small>Masukkan 'admin123' untuk percobaan</small>
+                    <label>Email Guru</label>
+                    <input type="email" id="login-email-guru" class="form-control" placeholder="Contoh: guru@sekolah.com" required>
+                    <small>Default/Contoh: admin@sekolah.com</small>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="login-password-guru" class="form-control" placeholder="Masukkan Password" required>
+                    <small>Default/Contoh: admin123</small>
                 </div>
                 <button type="submit" class="btn btn-primary w-100" style="width: 100%; justify-content: center;">Masuk</button>
+                <div style="text-align: center; margin-top: 16px;">
+                    <a href="#" onclick="openModal('forgot-password-modal')" style="font-size: 14px; text-decoration: none;">Lupa Password?</a>
+                    <p style="font-size: 14px; color: var(--text-muted); margin-top: 8px;">Belum terdaftar? <a href="#" onclick="switchLoginTab('register-guru')">Daftar Akun Guru</a></p>
+                </div>
             </form>
-
             <!-- Siswa Login Form -->
             <form id="form-login-siswa" class="auth-form" style="display: none;">
                 <div class="form-group">
                     <label>NIS Siswa</label>
                     <input type="text" id="login-nis-siswa" class="form-control" placeholder="Masukkan Nomor Induk Siswa" required>
                 </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="login-password-siswa" class="form-control" placeholder="Masukkan Password" required>
+                </div>
                 <button type="submit" class="btn btn-primary w-100" style="width: 100%; justify-content: center;">Masuk</button>
                 
                 <div style="text-align: center; margin-top: 16px;">
-                    <p style="font-size: 14px; color: var(--text-muted)">Belum terdaftar? <a href="#" onclick="switchLoginTab('register')">Daftar Akun</a></p>
+                    <a href="#" onclick="openModal('forgot-password-modal')" style="font-size: 14px; text-decoration: none;">Lupa Password?</a>
+                    <p style="font-size: 14px; color: var(--text-muted); margin-top: 8px;">Belum terdaftar? <a href="#" onclick="switchLoginTab('register')">Daftar Akun</a></p>
+                </div>
+            </form>
+
+            <!-- Guru Register Form -->
+            <form id="form-register-guru" class="auth-form" style="display: none;">
+                <div class="form-group">
+                    <label>Nama Lengkap Guru</label>
+                    <input type="text" id="reg-guru-name" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Email Guru</label>
+                    <input type="email" id="reg-guru-email" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="reg-guru-password" class="form-control" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-100" style="width: 100%; justify-content: center;">Daftar Akun Guru</button>
+                <div style="text-align: center; margin-top: 16px;">
+                    <p style="font-size: 14px; color: var(--text-muted)">Sudah punya akun? <a href="#" onclick="switchLoginTab('guru')">Kembali ke Login</a></p>
                 </div>
             </form>
 
@@ -58,8 +93,20 @@
                     <input type="text" id="reg-nis" class="form-control" required>
                 </div>
                 <div class="form-group">
+                    <label>Email Siswa</label>
+                    <input type="email" id="reg-email" class="form-control" placeholder="Email untuk lupa password" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="reg-password" class="form-control" required>
+                </div>
+                <div class="form-group">
                     <label>Nama Lengkap</label>
                     <input type="text" id="reg-name" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Kelas</label>
+                    <input type="text" id="reg-kelas" class="form-control" placeholder="Contoh: 10A" required>
                 </div>
                 <div class="form-group">
                     <label>Jenis Kelamin</label>
@@ -115,7 +162,13 @@
                 </a>
             </nav>
 
-            <div class="sidebar-footer" style="padding: 24px 16px; margin-top:auto; border-top: 1px solid var(--border);">
+            <div class="sidebar-footer" style="padding: 24px 16px; margin-top:auto; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px;">
+                <button class="btn btn-secondary w-100" id="btn-ganti-pin" onclick="openModal('pin-modal')" style="width: 100%; justify-content: center; display: none;">
+                    <i class="ph ph-key"></i> Ganti Password Guru
+                </button>
+                <button class="btn btn-secondary w-100" id="btn-ganti-password" onclick="openModal('password-modal')" style="width: 100%; justify-content: center; display: none;">
+                    <i class="ph ph-key"></i> Ganti Password
+                </button>
                 <button class="btn btn-outline w-100" onclick="logout()" style="width: 100%; justify-content: center; color:var(--danger)">
                     <i class="ph ph-sign-out"></i> Keluar
                 </button>
@@ -208,13 +261,13 @@
                     </div>
 
                     <div style="margin-bottom: 16px; font-size: 13px; color: var(--text-muted); background: #f8fafc; padding: 12px; border-radius:8px; border:1px solid var(--border);">
-                        <strong>Info Import:</strong> File Excel harus memiliki header kolom: <code>NIS</code>, <code>Nama Lengkap</code>, dan <code>Jenis Kelamin</code> (L/P). <a href="#" onclick="downloadTemplate()" style="color:var(--primary)">Download Template</a>
+                        <strong>Info Import:</strong> File Excel harus memiliki header kolom: <code>NIS</code>, <code>Nama Lengkap</code>, <code>Email</code>, <code>Kelas</code>, <code>Jenis Kelamin</code> (L/P), dan opsional <code>Password</code>. Jika Password kosong, NIS akan digunakan. <a href="#" onclick="downloadTemplate()" style="color:var(--primary)">Download Template</a>
                     </div>
 
                     <div class="table-container">
                         <table>
                             <thead>
-                                <tr><th>NIS</th><th>Nama Lengkap</th><th>Jenis Kelamin</th><th>Aksi</th></tr>
+                                <tr><th>NIS</th><th>Nama Lengkap</th><th>Email</th><th>Kelas</th><th>Jenis Kelamin</th><th>Aksi</th></tr>
                             </thead>
                             <tbody id="students-table-body">
                                 <!-- Data rendered by JS -->
@@ -289,7 +342,9 @@
                     <div class="report-filters">
                         <select id="report-student-select" class="form-control"></select>
                         <button class="btn btn-primary" onclick="generateReport()"><i class="ph ph-file-text"></i> Tampilkan</button>
-                        <button class="btn btn-secondary" onclick="printReport()" id="btn-print" disabled><i class="ph ph-printer"></i> Cetak</button>
+                        <button class="btn btn-outline" onclick="publishReport()" id="btn-publish-report" disabled><i class="ph ph-paper-plane-tilt"></i> Kirim ke Siswa</button>
+                        <button class="btn btn-secondary" onclick="printReportXLSX()" id="btn-print-xlsx" disabled><i class="ph ph-microsoft-excel-logo"></i> Export XLSX</button>
+                        <button class="btn btn-secondary" onclick="printReportPDF()" id="btn-print-pdf" disabled><i class="ph ph-file-pdf"></i> Export PDF</button>
                     </div>
                     <div class="printable-area" id="printable-area" style="display:none;"></div>
                 </section>
@@ -326,8 +381,11 @@
                     </div>
                     
                     <div class="widget">
-                        <div class="widget-header">
+                        <div class="widget-header" style="justify-content: space-between; display: flex;">
                             <h3>Detail Nilaimu</h3>
+                            <button class="btn btn-secondary" id="btn-ganti-password-siswa-dash" onclick="openModal('password-modal')">
+                                <i class="ph ph-key"></i> Ganti Password
+                            </button>
                         </div>
                         <div class="table-container">
                             <table class="recap-table">
@@ -336,6 +394,15 @@
                                 </thead>
                                 <tbody id="siswa-my-grades-table"></tbody>
                             </table>
+                        </div>
+                    </div>
+                    
+                    <div class="widget" id="student-report-widget" style="display: none; background: #e0f2fe; border: 1px solid #bae6fd;">
+                        <div class="widget-body" style="text-align: center; padding: 24px;">
+                            <i class="ph ph-certificate" style="font-size: 48px; color: var(--primary); margin-bottom: 8px;"></i>
+                            <h3 style="margin-bottom: 8px;">E-Rapor Tersedia</h3>
+                            <p style="color: var(--text-muted); margin-bottom: 16px;">Guru telah mempublikasikan laporan hasil belajarmu.</p>
+                            <button class="btn btn-primary" onclick="viewMyReport()"><i class="ph ph-eye"></i> Lihat Rapor Resmi</button>
                         </div>
                     </div>
                 </section>
@@ -371,8 +438,16 @@
                         <input type="text" id="student-nis" required class="form-control">
                     </div>
                     <div class="form-group">
+                        <label>Email Siswa</label>
+                        <input type="email" id="student-email" class="form-control" placeholder="Penting untuk reset password">
+                    </div>
+                    <div class="form-group">
                         <label>Nama Lengkap</label>
                         <input type="text" id="student-name" required class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Kelas</label>
+                        <input type="text" id="student-kelas" required class="form-control" placeholder="Contoh: 10A">
                     </div>
                     <div class="form-group">
                         <label>Jenis Kelamin</label>
@@ -380,6 +455,10 @@
                             <option value="L">Laki-laki</option>
                             <option value="P">Perempuan</option>
                         </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Password Siswa</label>
+                        <input type="password" id="student-password" class="form-control" placeholder="Biarkan kosong untuk default (sesuai NIS)">
                     </div>
                     <div class="modal-actions">
                         <button type="button" class="btn btn-outline" onclick="closeModal('student-modal')">Batal</button>
@@ -432,6 +511,83 @@
         </div>
     </div>
 
+    <!-- Change PIN Modal (Guru) -->
+    <div class="modal" id="pin-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Ganti Password Guru</h3>
+                <button class="close-btn" onclick="closeModal('pin-modal')"><i class="ph ph-x"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="pin-form">
+                    <div class="form-group">
+                        <label>Password Lama</label>
+                        <input type="password" id="old-pin" required class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Password Baru</label>
+                        <input type="password" id="new-pin" required class="form-control">
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-outline" onclick="closeModal('pin-modal')">Batal</button>
+                        <button type="submit" class="btn btn-primary">Simpan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Change Password Modal (Siswa) -->
+    <div class="modal" id="password-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Ganti Password Siswa</h3>
+                <button class="close-btn" onclick="closeModal('password-modal')"><i class="ph ph-x"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="password-form">
+                    <div class="form-group">
+                        <label>Password Lama</label>
+                        <input type="password" id="old-password" required class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Password Baru</label>
+                        <input type="password" id="new-password" required class="form-control">
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-outline" onclick="closeModal('password-modal')">Batal</button>
+                        <button type="submit" class="btn btn-primary">Simpan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Forgot Password Modal -->
+    <div class="modal" id="forgot-password-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Lupa Password</h3>
+                <button class="close-btn" onclick="closeModal('forgot-password-modal')"><i class="ph ph-x"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="forgot-password-form">
+                    <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 16px;">
+                        Silakan masukkan alamat email yang terdaftar. Kami akan mengirimkan instruksi pemulihan ke email tersebut.
+                    </p>
+                    <div class="form-group">
+                        <label>Email Pengguna</label>
+                        <input type="email" id="forgot-email" required class="form-control" placeholder="Masukkan Email Anda (Siswa/Guru)">
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-outline" onclick="closeModal('forgot-password-modal')">Batal</button>
+                        <button type="submit" class="btn btn-primary"><i class="ph ph-paper-plane-tilt" style="margin-right:8px;"></i> Kirim ke Email</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Form Submit Action Modal (Untuk Siswa mereview uploadnya) -->
     <div class="modal" id="upload-modal">
         <div class="modal-content">
@@ -444,6 +600,22 @@
                 <h4 style="margin-bottom: 8px;">Tugas Berhasil Terunggah ke Guru!</h4>
                 <p id="upload-modal-filename" style="color:var(--text-muted); font-style:italic; margin-bottom: 24px;"></p>
                 <button class="btn btn-primary" onclick="closeModal('upload-modal')">Selesai</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal untuk Siswa Melihat Rapor Resmi -->
+    <div class="modal" id="student-report-modal">
+        <div class="modal-content" style="max-width: 800px; width: 90%;">
+            <div class="modal-header">
+                <h3>E-Rapor Resmi</h3>
+                <div>
+                   <button class="btn btn-secondary" style="padding: 4px 12px; margin-right: 8px;" onclick="printStudentReport()"><i class="ph ph-printer"></i> Cetak PDF</button>
+                   <button class="close-btn" onclick="closeModal('student-report-modal')"><i class="ph ph-x"></i></button>
+                </div>
+            </div>
+            <div class="modal-body" id="student-report-body" style="max-height: 75vh; overflow-y: auto;">
+                <!-- Diisi otomatis oleh javascript app.js -->
             </div>
         </div>
     </div>

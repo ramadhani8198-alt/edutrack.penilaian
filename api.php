@@ -55,8 +55,8 @@ if ($action === 'upload_file') {
         // Clean filename (Basic protection)
         $fileName = preg_replace("/[^a-zA-Z0-9.-]/", "_", $fileName);
         
-        // Allowed extensions (pdf, word, images, ppt)
-        $allowedExts = ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png', 'ppt', 'pptx', 'xls', 'xlsx'];
+        // Allowed extensions (pdf, word, images, ppt, video)
+        $allowedExts = ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png', 'ppt', 'pptx', 'xls', 'xlsx', 'mp4'];
         $fileExt = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
         
         if (in_array($fileExt, $allowedExts)) {
